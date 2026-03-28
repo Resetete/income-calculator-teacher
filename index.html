@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unterrichtsrechner</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>Unterrichtsrechner</h1>
+  <span class="subtitle">Monatliches Einkommen · Berlin</span>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('kurse')">① Kurse</button>
+  <button class="tab" onclick="switchTab('schueler')">② Schüler</button>
+  <button class="tab" onclick="switchTab('wochenplan')">③ Wochenplan</button>
+  <button class="tab" onclick="switchTab('monat')">④ Monatsabrechnung</button>
+</div>
+
+<!-- ══ TAB 1: KURSE ══ -->
+<div class="tab-content active" id="tab-kurse">
+  <div class="panel" style="max-width:560px">
+    <div class="panel-title">Unterrichtseinheiten / Kurse</div>
+    <div class="kurs-labels">
+      <div class="col-label">Instrument / Bezeichnung</div>
+      <div class="col-label">Dauer (min)</div>
+      <div class="col-label">Preis (€)</div>
+      <div></div>
+    </div>
+    <div id="kursList"></div>
+    <button class="btn btn-add" onclick="addKurs()">+ Kurs hinzufügen</button>
+  </div>
+</div>
+
+<!-- ══ TAB 2: SCHÜLER ══ -->
+<div class="tab-content" id="tab-schueler">
+  <div class="panel" style="max-width:400px">
+    <div class="panel-title">Schülerliste</div>
+    <div id="schuelerList"></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <input type="text" id="newSchuelerName" placeholder="Name eingeben…" style="flex:1" onkeydown="if(event.key==='Enter')addSchueler()">
+      <button class="btn" onclick="addSchueler()">+ Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB 3: WOCHENPLAN ══ -->
+<div class="tab-content" id="tab-wochenplan">
+  <div class="two-col">
+    <div>
+      <div class="panel">
+        <div class="panel-title">Aktive Unterrichtstage</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="weekdayBtns">
+          <button class="btn" data-day="1" onclick="toggleDay(1)">Mo</button>
+          <button class="btn" data-day="2" onclick="toggleDay(2)">Di</button>
+          <button class="btn" data-day="3" onclick="toggleDay(3)">Mi</button>
+          <button class="btn" data-day="4" onclick="toggleDay(4)">Do</button>
+          <button class="btn" data-day="5" onclick="toggleDay(5)">Fr</button>
+          <button class="btn" data-day="6" onclick="toggleDay(6)">Sa</button>
+          <button class="btn" data-day="0" onclick="toggleDay(0)">So</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Basis-Wochenplan</div>
+        <p class="hint" style="margin-bottom:14px">Wähle pro Unterrichtstag, welche Schüler kommen und welchen Kurs sie machen. Dieser Plan gilt als Vorlage für alle Wochen im Monat.</p>
+        <div class="weekday-list" id="basePlanList"></div>
+      </div>
+    </div>
+    <div class="sticky-sidebar">
+      <div class="result-card">
+        <div class="panel-title">Wochenplan-Übersicht</div>
+        <div id="planSummary"><div class="hint">Noch keine Einträge.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB 4: MONATSABRECHNUNG ══ -->
+<div class="tab-content" id="tab-monat">
+  <div class="two-col">
+    <div>
+      <div class="panel">
+        <div class="panel-title">Zeitraum</div>
+        <div class="month-row">
+          <select id="selMonth">
+            <option value="0">Januar</option>
+            <option value="1">Februar</option>
+            <option value="2">März</option>
+            <option value="3">April</option>
+            <option value="4">Mai</option>
+            <option value="5">Juni</option>
+            <option value="6">Juli</option>
+            <option value="7">August</option>
+            <option value="8">September</option>
+            <option value="9">Oktober</option>
+            <option value="10">November</option>
+            <option value="11">Dezember</option>
+          </select>
+          <select id="selYear"></select>
+        </div>
+        <p class="hint">Klicke auf einen Schüler → als abwesend markieren. Feiertage &amp; Schulferien werden automatisch berücksichtigt.</p>
+      </div>
+      <div id="weeksList" class="weeks-list"></div>
+    </div>
+    <div class="sticky-sidebar">
+      <div class="result-card">
+        <div class="panel-title">Monatseinkommen</div>
+        <div class="big-num" id="totalIncome"><span>€</span> 0,00</div>
+        <div class="result-sub" id="incomeSub">—</div>
+      </div>
+      <div class="result-card">
+        <div class="panel-title">Nach Kurs</div>
+        <div id="kursStats"></div>
+        <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
+        <div id="dayStats"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ EXTRA MODAL ══ -->
+<div class="modal-backdrop" id="extraModal" style="display:none" onclick="closeModal(event)">
+  <div class="modal">
+    <h3>Zusatz-Schüler</h3>
+    <label>Schüler</label>
+    <select id="modalSchueler"></select>
+    <label>Kurs</label>
+    <select id="modalKurs"></select>
+    <div class="modal-btns">
+      <button class="btn" onclick="document.getElementById('extraModal').style.display='none'">Abbrechen</button>
+      <button class="btn" id="modalConfirm" style="border-color:var(--green);color:var(--green)">Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
