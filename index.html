@@ -10,15 +10,43 @@
 <body>
 
 <header>
-  <h1>Unterrichtsrechner</h1>
-  <span class="subtitle">Monatliches Einkommen · Berlin</span>
+  <div class="header-left">
+    <h1>Unterrichtsrechner</h1>
+    <span class="subtitle" id="headerSubtitle">Monatliches Einkommen</span>
+  </div>
+  <div class="header-actions">
+    <select id="selBundesland" onchange="onBundeslandChange()">
+      <option value="BE">Berlin</option>
+      <option value="BB">Brandenburg</option>
+      <option value="BW">Baden-Württemberg</option>
+      <option value="BY">Bayern</option>
+      <option value="HB">Bremen</option>
+      <option value="HE">Hessen</option>
+      <option value="HH">Hamburg</option>
+      <option value="MV">Mecklenburg-Vorpommern</option>
+      <option value="NI">Niedersachsen</option>
+      <option value="NW">Nordrhein-Westfalen</option>
+      <option value="RP">Rheinland-Pfalz</option>
+      <option value="SH">Schleswig-Holstein</option>
+      <option value="SL">Saarland</option>
+      <option value="SN">Sachsen</option>
+      <option value="ST">Sachsen-Anhalt</option>
+      <option value="TH">Thüringen</option>
+    </select>
+    <button class="btn btn-action" onclick="saveToLocalStorage()">💾 Speichern</button>
+    <button class="btn btn-action" onclick="exportData()">↑ Export</button>
+    <label class="btn btn-action">↓ Import<input type="file" id="importFile" accept=".json" onchange="importData(event)" style="display:none"></label>
+  </div>
 </header>
+
+<div class="save-notice" id="saveNotice"></div>
 
 <div class="tabs">
   <button class="tab active" onclick="switchTab('kurse')">① Kurse</button>
   <button class="tab" onclick="switchTab('schueler')">② Schüler</button>
   <button class="tab" onclick="switchTab('wochenplan')">③ Wochenplan</button>
-  <button class="tab" onclick="switchTab('monat')">④ Monatsabrechnung</button>
+  <button class="tab" onclick="switchTab('monat')">④ Monat</button>
+  <button class="tab" onclick="switchTab('jahr')">⑤ Jahr</button>
 </div>
 
 <!-- ══ TAB 1: KURSE ══ -->
@@ -42,7 +70,8 @@
     <div class="panel-title">Schülerliste</div>
     <div id="schuelerList"></div>
     <div style="display:flex;gap:8px;margin-top:8px">
-      <input type="text" id="newSchuelerName" placeholder="Name eingeben…" style="flex:1" onkeydown="if(event.key==='Enter')addSchueler()">
+      <input type="text" id="newSchuelerName" placeholder="Name eingeben…" style="flex:1"
+             onkeydown="if(event.key==='Enter')addSchueler()">
       <button class="btn" onclick="addSchueler()">+ Hinzufügen</button>
     </div>
   </div>
@@ -66,7 +95,7 @@
       </div>
       <div class="panel">
         <div class="panel-title">Basis-Wochenplan</div>
-        <p class="hint" style="margin-bottom:14px">Wähle pro Unterrichtstag, welche Schüler kommen und welchen Kurs sie machen. Dieser Plan gilt als Vorlage für alle Wochen im Monat.</p>
+        <p class="hint" style="margin-bottom:14px">Wähle pro Unterrichtstag, welche Schüler kommen und welchen Kurs sie machen. Dieser Plan gilt als Vorlage für alle Wochen.</p>
         <div class="weekday-list" id="basePlanList"></div>
       </div>
     </div>
@@ -87,22 +116,16 @@
         <div class="panel-title">Zeitraum</div>
         <div class="month-row">
           <select id="selMonth">
-            <option value="0">Januar</option>
-            <option value="1">Februar</option>
-            <option value="2">März</option>
-            <option value="3">April</option>
-            <option value="4">Mai</option>
-            <option value="5">Juni</option>
-            <option value="6">Juli</option>
-            <option value="7">August</option>
-            <option value="8">September</option>
-            <option value="9">Oktober</option>
-            <option value="10">November</option>
-            <option value="11">Dezember</option>
+            <option value="0">Januar</option><option value="1">Februar</option>
+            <option value="2">März</option><option value="3">April</option>
+            <option value="4">Mai</option><option value="5">Juni</option>
+            <option value="6">Juli</option><option value="7">August</option>
+            <option value="8">September</option><option value="9">Oktober</option>
+            <option value="10">November</option><option value="11">Dezember</option>
           </select>
           <select id="selYear"></select>
         </div>
-        <p class="hint">Klicke auf einen Schüler → als abwesend markieren. Feiertage &amp; Schulferien werden automatisch berücksichtigt.</p>
+        <p class="hint">Klicke auf einen Schüler → als abwesend markieren. An Feiertagen &amp; Schulferien wird kein Gehalt gezahlt.</p>
       </div>
       <div id="weeksList" class="weeks-list"></div>
     </div>
@@ -117,6 +140,34 @@
         <div id="kursStats"></div>
         <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
         <div id="dayStats"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB 5: JAHRESÜBERSICHT ══ -->
+<div class="tab-content" id="tab-jahr">
+  <div class="two-col">
+    <div>
+      <div class="panel">
+        <div class="panel-title">Jahresübersicht</div>
+        <div class="month-row">
+          <select id="selJahrYear"></select>
+        </div>
+        <p class="hint">Hochgerechnetes Einkommen pro Monat auf Basis des Basis-Wochenplans, Feiertagen und Schulferien. Manuelle Abwesenheiten aus Tab ④ sind nicht enthalten.</p>
+      </div>
+      <div id="jahresChart" class="jahres-chart-wrap"></div>
+      <div id="jahresTable"></div>
+    </div>
+    <div class="sticky-sidebar">
+      <div class="result-card">
+        <div class="panel-title">Jahreseinkommen</div>
+        <div class="big-num" id="jahresTotal"><span>€</span> 0,00</div>
+        <div class="result-sub" id="jahresSub">—</div>
+      </div>
+      <div class="result-card">
+        <div class="panel-title">Statistik</div>
+        <div id="jahresStats"></div>
       </div>
     </div>
   </div>
